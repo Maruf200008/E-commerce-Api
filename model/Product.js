@@ -30,11 +30,13 @@ const productSchema = mongoose.Schema({
     },
     quantity : {
         type : Number,
-        required : true
+        required : true,
+        select : true
     },
     sold : {
         type : Number,
-        default : 0
+        default : 0,
+        select : true
     },
     images : {
         type : Array
@@ -48,7 +50,7 @@ const productSchema = mongoose.Schema({
         postedby : {type : mongoose.Types.ObjectId}
     }]
 }, {
-    timestamp : true
+    timestamps : true
 }
 )
 
