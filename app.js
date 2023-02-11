@@ -11,6 +11,9 @@ const morgan = require('morgan')
 const {notFoundHandlar, errorHandlar} = require('./middlewares/common/errorHandlar');
 const userRoute = require('./routes/userRoute')
 const productRoute = require('./routes/productRoute')
+const blogRoute = require('./routes/blogRoute')
+const categoryRoute = require('./routes/categoryRoute')
+const blogCatRoute = require('./routes/blogCatRoute')
 
 
 const app = express();
@@ -34,6 +37,10 @@ app.use(express.static(path.join(__dirname, 'public/uploads/')));
 // router handlar
 app.use('/user', userRoute);
 app.use('/product', productRoute);
+app.use('/blog', blogRoute);
+app.use('/category', categoryRoute)
+app.use('/blogCat', blogCatRoute)
+
 
 
 // not found handlar

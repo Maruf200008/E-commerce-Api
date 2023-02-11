@@ -1,10 +1,13 @@
 // external import 
 const bcrypt = require('bcrypt');
 const createError = require('http-errors');
+const crypto = require('crypto');
 
 // internal import 
 const User = require('../../model/People')
 const validateIdHandlar = require('../../utils/validateMongobdId')
+const passwordResetToken = require('../../utils/passwordResetToken')
+const sendMail = require('../../utils/emailControl')
 
 const addUser = async (req, res, next) => {
     try {
@@ -32,6 +35,34 @@ const addUser = async (req, res, next) => {
 
 
 }
+
+const updatePassword = async (req, res,) => {
+    const {id} = req.params;
+    const {password} = req.body;
+ 
+    try {
+        const user = await User.findById({_id : id});
+    if(password){
+        const hashPassword =  await bcrypt.hash(req.body.password, 10)
+        user.password = hashPassword;
+        const updatePassword = await user.save()
+        res.status(200).json({
+            message : "Password update sucessfully!!",
+            password : updatePassword
+        })
+    }
+    }catch(err) {
+        console.log(err.message)
+        res.status(500).json({
+            message : "Password not update",
+        
+        })
+
+        
+    }
+
+}
+
 const getAllUser = async (req, res, next) => {
     try {
         const getUser = await User.find({});
@@ -180,6 +211,61 @@ const logout = async (req, res) => {
 
 }
 
+const forgetPasswordToken = async(req, res) => {
+    const {email} = req.body;
+    try{
+        const user = await User.findOne({email})
+        if(!user) {
+            throw createError("User was not found with this email!!")
+        }else {
+            const token = await passwordResetToken()
+            await user.save();
+            const resetURL = `Hi, Please follow this link to reset your password. This link is valid till 10 minutes from now. <a href="http://localhost:9000/user/forget-password-token/${token}"> Click Here </a>`
+            const data = {
+                to : email,
+                text :"Hey User",
+                subject : "Forget Password Link",
+                html : resetURL
+            }
+            sendMail(data)
+            res.json(token)
+        }
+
+    }catch(err) {
+        console.log(err)
+
+    }
+
+
+}
+
+const resetPassword = async(req, res) => {
+    const {password} = req.body;
+    const {token} = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex")
+    try{
+        const user = await User.findOne({
+            passwordResetToken : hashedToken,
+            passwordRestExpries : {$gt: Date.now()}
+        })
+
+        console.log(password)
+        if(!user) createError("Token Expired, Please try again later")
+        user.password = password;
+        user.passwordResetToken = undefined;
+        user.passwordRestExpries = undefined;
+        await user.save();
+        res.status(200).json(user)
+        
+
+    }catch(err) {
+        console.log(err)
+        res.status(500).json({
+            error : "Somthing is rong!!"
+        })
+
+    }
+}
 module.exports = {
     addUser,
     getAllUser,
@@ -189,4 +275,7 @@ module.exports = {
     blockUserHandlar,
     unBlockUserHandlar,
     logout,
+    updatePassword,
+    forgetPasswordToken,
+    resetPassword
 }

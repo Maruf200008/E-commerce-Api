@@ -83,7 +83,6 @@ const getAllProduct = async (req, res) => {
         const page = req.query.page;
         const limit = req.query.limit;
         const skip = (page - 1) * limit;
-        console.log(page, limit, skip)
         query = query.skip(skip).limit(limit)
         if(req.query.page) {
             const productCount = await Product.countDocuments()
